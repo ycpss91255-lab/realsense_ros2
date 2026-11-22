@@ -52,7 +52,7 @@ jobs:
           - { name: humble, ros_distro: humble, ros_tag: ros-base, ubuntu_codename: jammy }
           - { name: jazzy,  ros_distro: jazzy,  ros_tag: ros-base, ubuntu_codename: noble }
     name: build (${{ matrix.target.name }})
-    uses: ycpss91255-docker/base/.github/workflows/build-worker.yaml@v0.41.0
+    uses: ycpss91255-lab/base/.github/workflows/build-worker.yaml@v0.41.0
     with:
       image_name: realsense_ros2
       cache_variant: ${{ matrix.target.name }}
@@ -74,7 +74,7 @@ jobs:
         ROS_DISTRO=${{ matrix.target.ros_distro }}
         ROS_TAG=${{ matrix.target.ros_tag }}
         UBUNTU_CODENAME=${{ matrix.target.ubuntu_codename }}
-        LIBREALSENSE_IMAGE=ghcr.io/ycpss91255-docker/librealsense:${{ needs.resolve-librealsense.outputs.version }}-${{ matrix.target.ubuntu_codename }}
+        LIBREALSENSE_IMAGE=ghcr.io/ycpss91255-lab/librealsense:${{ needs.resolve-librealsense.outputs.version }}-${{ matrix.target.ubuntu_codename }}
 
   # Stable-named aggregator so branch protection's required status check does
   # not have to enumerate every matrix entry. Branch protection references
@@ -96,7 +96,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write
-    uses: ycpss91255-docker/base/.github/workflows/release-worker.yaml@v0.41.0
+    uses: ycpss91255-lab/base/.github/workflows/release-worker.yaml@v0.41.0
     with:
       archive_name_prefix: realsense_ros2
     secrets: inherit

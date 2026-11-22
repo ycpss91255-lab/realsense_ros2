@@ -2,7 +2,7 @@
 
 # Intel RealSense Docker 容器（ROS 2）
 
-[![CI](https://github.com/ycpss91255-docker/realsense_ros2/actions/workflows/main.yaml/badge.svg)](https://github.com/ycpss91255-docker/realsense_ros2/actions/workflows/main.yaml) [![License](https://img.shields.io/badge/License-Apache--2.0-blue?style=flat-square)](../LICENSE)
+[![CI](https://github.com/ycpss91255-lab/realsense_ros2/actions/workflows/main.yaml/badge.svg)](https://github.com/ycpss91255-lab/realsense_ros2/actions/workflows/main.yaml) [![License](https://img.shields.io/badge/License-Apache--2.0-blue?style=flat-square)](../LICENSE)
 
 ## TL;DR
 

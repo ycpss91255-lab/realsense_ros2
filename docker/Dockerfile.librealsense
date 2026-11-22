@@ -1,6 +1,6 @@
 # Prebuilt librealsense SDK source image: compiles librealsense ONCE per Ubuntu
 # platform and publishes to
-# ghcr.io/ycpss91255-docker/librealsense:${LIBREALSENSE_VERSION}-${UBUNTU_CODENAME},
+# ghcr.io/ycpss91255-lab/librealsense:${LIBREALSENSE_VERSION}-${UBUNTU_CODENAME},
 # so the main Dockerfile FROMs it and COPYs the prebuilt trees instead of
 # recompiling (~15-25 min) every build. Keyed on UBUNTU_CODENAME, not the ROS
 # distro: librealsense2 is a pure C++ SDK whose .so is ABI-bound to the release's
