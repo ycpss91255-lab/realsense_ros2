@@ -133,7 +133,7 @@ just build test                  # 构建 devel-test 关卡
 just run                         # 启动（例如 just run -d）
 just exec                        # 进入运行中的容器
 just stop                        # 停止并移除容器
-just setup                       # 从 setup.conf 重新生成 .env + compose.yaml
+just setup                       # 从 setup.toml 重新生成 .env + compose.yaml
 
 docker compose build runtime     # 等效的底层命令
 docker compose up runtime        # 启动
@@ -197,7 +197,7 @@ ROS 2 没有 master——同一个 **DDS domain** 上的节点会通过 LAN 自�
 domain ID，这是每次部署时的运行期数值，所以它放在 **`.env`**（手动撰写的
 workload overlay——通过 `env_file: - .env` 注入，仅由 `just run` 应用，永远
 不会被重新生成，且已被 git 忽略）。机器层级／构建参数（GPU、privileged、
-挂载）则留在 `config/docker/setup.conf`。
+挂载）则留在 `setup.toml`。
 
 此 repo 已默认 `[network] mode = host`，所以 DDS 发现（multicast）与流量都走
 主机真实网卡——其他机器可以连得到。
@@ -254,13 +254,13 @@ just prune     # remove this repo's images + dangling build cache (see `just pru
 
 ## 配置
 
-### 配置面（setup.conf）
+### 配置面（setup.toml）
 
-真正的配置面是 `config/docker/setup.conf`。`just setup` 会据此生成 `.env` 和
-`compose.yaml`，因此 `.env` 是生成产物，不应手动编辑。请编辑 `setup.conf`
+真正的配置面是 `setup.toml`。`just setup` 会据此生成 `.env` 和
+`compose.yaml`，因此 `.env` 是生成产物，不应手动编辑。请编辑 `setup.toml`
 （或 `just setup-tui`）后重新运行 `just setup`。
 
-`setup.conf` 划分为若干区段 —— `[image]`、`[build]`、`[deploy]`、`[gui]`、
+`setup.toml` 划分为若干区段 —— `[image]`、`[build]`、`[deploy]`、`[gui]`、
 `[network]`、`[security]`、`[resources]`、`[environment]`、`[tmpfs]`、
 `[devices]`、`[volumes]`。例如 `[deploy]` 区段承载 GPU 运行时键
 （`gpu_mode`、`gpu_count`、`gpu_capabilities`、`gpu_runtime`），而 `[image]`
@@ -428,9 +428,8 @@ realsense_ros2/
 ├── docker/
 │   └── librealsense/
 │       └── Dockerfile           # 预构建 librealsense SDK 源 image（本地：pre-build hook；CI：发布至 GHCR）
+├── setup.toml                   # 配置面（.env/compose.yaml 由此生成）
 ├── config/
-│   ├── docker/
-│   │   └── setup.conf           # 配置面（.env/compose.yaml 由此生成）
 │   └── realsense/                     # type-first：yaml/ + json/ + udev/
 │       ├── yaml/                      # 我们自己的 profile（none + 具名 preset）
 │       │   ├── none.yaml                 # 空文件 = 原厂/默认（camera.yaml 默认目标）

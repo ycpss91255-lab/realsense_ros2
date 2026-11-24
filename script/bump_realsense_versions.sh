@@ -6,9 +6,9 @@
 # minor it declares (find_package(realsense2 X.Y.Z) in realsense2_camera/
 # CMakeLists.txt), and pin librealsense to the newest release tag in THAT minor.
 # This never pairs a librealsense+realsense-ros combo upstream did not test.
-# The librealsense pin lives in config/docker/setup.conf ([build] arg_N =
-# LIBREALSENSE_VERSION=...) -- the single source local build + CI both read -- so
-# this script rewrites THAT line via conf_arg / set_conf_arg. REALSENSE_ROS_VERSION
+# The librealsense pin lives in the root setup.toml ([[build.args]] table with
+# key = "LIBREALSENSE_VERSION") -- the single source local build + CI both read --
+# so this script rewrites THAT value via conf_arg / set_conf_arg. REALSENSE_ROS_VERSION
 # stays in the Dockerfile ARG (no multi-copy problem) via current_arg / set_arg.
 # Prints each old->new transition to stdout, and emits a trailing abi_safe=<bool>
 # line for the scheduled workflow. Exit 0 when a change was made, 10 when already
@@ -23,10 +23,10 @@ readonly SCRIPT_DIR
 DOCKERFILE="${DOCKERFILE:-${SCRIPT_DIR}/../Dockerfile}"
 readonly DOCKERFILE
 # Overridable so a sourcing test can point conf_arg / set_conf_arg at a fixture
-# setup.conf; unset in real use, it resolves to the repo setup.conf. This is the
+# setup.toml; unset in real use, it resolves to the repo setup.toml. This is the
 # canonical store for the librealsense pin.
-SETUP_CONF="${SETUP_CONF:-${SCRIPT_DIR}/../config/docker/setup.conf}"
-readonly SETUP_CONF
+SETUP_TOML="${SETUP_TOML:-${SCRIPT_DIR}/../setup.toml}"
+readonly SETUP_TOML
 # Overridable so a sourcing test can point prepend_changelog_entry at a fixture.
 CHANGELOG="${CHANGELOG:-${SCRIPT_DIR}/../doc/changelog/CHANGELOG.md}"
 readonly CHANGELOG
@@ -43,7 +43,7 @@ Bump the pinned RealSense source tags. realsense-ros is the driver: its latest
 release picks the target, and librealsense is pinned to the newest release in
 the minor realsense-ros declares (find_package(realsense2 X.Y.Z)), so the pair
 is always one upstream tested. The librealsense pin is rewritten in
-config/docker/setup.conf (the canonical source); REALSENSE_ROS_VERSION in the
+setup.toml (the canonical source); REALSENSE_ROS_VERSION in the
 Dockerfile ARG. Prints each old->new transition and a trailing abi_safe=<bool>
 classification to stdout.
 
@@ -70,19 +70,45 @@ set_arg() {
   sed -i -E "s|^(ARG ${arg_name}=\")[^\"]+(\")|\\1${new_value}\\2|" "${DOCKERFILE}"
 }
 
-# Reads a setup.conf [build] arg_N value by KEY: conf_arg <KEY>. Matches the
-# `arg_N = KEY=VALUE` line regardless of the arg_ index and returns VALUE.
+# Reads a setup.toml [[build.args]] value by KEY: conf_arg <KEY>. Walks the
+# `key = "..."` / `value = "..."` pair of each [[build.args]] table (any other
+# table header ends the current one, so a same-named key elsewhere is ignored)
+# and prints the first matching value.
 conf_arg() {
   local key="$1"
-  grep -oP "^\\s*arg_[0-9]+\\s*=\\s*${key}=\\K\\S+" "${SETUP_CONF}" | head -1
+  awk -v want="${key}" '
+    /^[[:space:]]*\[\[build\.args\]\]/ { inargs = 1; hit = 0; next }
+    /^[[:space:]]*\[/                    { inargs = 0; hit = 0; next }
+    inargs && /^[[:space:]]*key[[:space:]]*=/ {
+      v = $0; sub(/^[^=]*=[[:space:]]*"/, "", v); sub(/".*$/, "", v)
+      hit = (v == want); next
+    }
+    inargs && hit && /^[[:space:]]*value[[:space:]]*=/ {
+      v = $0; sub(/^[^=]*=[[:space:]]*"/, "", v); sub(/".*$/, "", v)
+      print v; exit
+    }' "${SETUP_TOML}"
 }
 
-# Rewrites a setup.conf [build] arg_N value by KEY in place: set_conf_arg <KEY>
-# <new_value>. Leaves the arg_ index and every other line untouched.
+# Rewrites a setup.toml [[build.args]] value by KEY in place: set_conf_arg <KEY>
+# <new_value>. Leaves every other line untouched.
 set_conf_arg() {
   local key="$1"
   local new_value="$2"
-  sed -i -E "s|^(\\s*arg_[0-9]+\\s*=\\s*${key}=)\\S+|\\1${new_value}|" "${SETUP_CONF}"
+  local tmp
+  tmp="$(mktemp)"
+  awk -v want="${key}" -v nv="${new_value}" '
+    /^[[:space:]]*\[\[build\.args\]\]/ { inargs = 1; hit = 0 }
+    !/^[[:space:]]*\[\[build\.args\]\]/ && /^[[:space:]]*\[/ { inargs = 0; hit = 0 }
+    inargs && /^[[:space:]]*key[[:space:]]*=/ {
+      v = $0; sub(/^[^=]*=[[:space:]]*"/, "", v); sub(/".*$/, "", v)
+      hit = (v == want)
+    }
+    inargs && hit && /^[[:space:]]*value[[:space:]]*=/ {
+      sub(/=.*$/, "= \"" nv "\""); hit = 0
+    }
+    { print }' "${SETUP_TOML}" > "${tmp}"
+  cat "${tmp}" > "${SETUP_TOML}"
+  rm -f "${tmp}"
 }
 
 # Fetches the latest release tag of a GitHub repo: latest_tag <owner/repo>.
@@ -198,12 +224,12 @@ main() {
       ;;
   esac
 
-  # librealsense pin from setup.conf (canonical); realsense-ros from the Dockerfile ARG.
+  # librealsense pin from setup.toml (canonical); realsense-ros from the Dockerfile ARG.
   local cur_lib cur_ros
   cur_lib="$(conf_arg LIBREALSENSE_VERSION || true)"
   cur_ros="$(current_arg REALSENSE_ROS_VERSION || true)"
   if [[ -z "${cur_lib}" ]]; then
-    echo "bump_realsense_versions.sh: could not parse LIBREALSENSE_VERSION from ${SETUP_CONF}" >&2
+    echo "bump_realsense_versions.sh: could not parse LIBREALSENSE_VERSION from ${SETUP_TOML}" >&2
     return 1
   fi
   if [[ -z "${cur_ros}" ]]; then

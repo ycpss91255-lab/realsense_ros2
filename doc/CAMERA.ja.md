@@ -86,4 +86,4 @@ D400 シリーズは、通常のシーンからステレオ深度パラメータ
 |---|---|
 | `No device detected` | ホストの `lsusb` はカメラを認識していますか? ケーブル / USB 3.0 ポート / 他のプロセスに占有されていないか。コンテナは `privileged`（デフォルト）です。 |
 | `ros2: command not found` | インタラクティブシェルは `~/.bashrc.d` を介して ROS を自動 source します。非インタラクティブな `just exec <cmd>` の場合のみ、先に `source /opt/ros/${ROS_DISTRO}/setup.bash` が必要です。 |
-| `realsense-viewer` が開かない (X11) | ホストに X サーバーがある; `echo $DISPLAY` が設定されている; `config/docker/setup.conf` で GUI モードが `[gui] mode = auto` になっている。 |
+| `realsense-viewer` が開かない (X11) | ホストに X サーバーがある; `echo $DISPLAY` が設定されている; `setup.toml` で GUI モードが `[gui] mode = auto` になっている。 |

@@ -5,7 +5,7 @@
 
 ## Context
 
-`config/docker/setup.conf` runs the container with `privileged = true` and a
+`setup.toml` runs the container with `privileged = true` and a
 live bind of the whole host `/dev`. On its face this looks over-broad for a
 single USB camera (a reader's instinct -- and the original audit, #70 -- is to
 narrow it to `privileged = false` + `/dev/bus/usb` + a device-cgroup

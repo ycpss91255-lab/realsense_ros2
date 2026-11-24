@@ -138,7 +138,7 @@ just build test                  # devel-test ゲートをビルド
 just run                         # 起動（例：just run -d）
 just exec                        # 実行中のコンテナに入る
 just stop                        # コンテナを停止・削除
-just setup                       # setup.conf から .env + compose.yaml を再生成
+just setup                       # setup.toml から .env + compose.yaml を再生成
 
 docker compose build runtime     # 同等の低レベルコマンド
 docker compose up runtime        # 起動
@@ -207,7 +207,7 @@ ROS 2 には master がありません——同じ **DDS domain** 上のノー�
 ごとのランタイム値なので **`.env`**（手動で書く workload overlay——`env_file:
 - .env` で注入され、`just run` だけで適用され、再生成されず、git で無視される）
 に置きます。マシン固有／ビルドパラメータ（GPU、privileged、マウント）は
-`config/docker/setup.conf` に残します。
+`setup.toml` に残します。
 
 この repo はすでに `[network] mode = host` を出荷しているため、DDS の発見
 （multicast）とトラフィックはホストの実インターフェースを使い——他のマシン
@@ -267,14 +267,14 @@ just prune     # remove this repo's images + dangling build cache (see `just pru
 
 ## 設定
 
-### 設定サーフェス（setup.conf）
+### 設定サーフェス（setup.toml）
 
-実際の設定サーフェスは `config/docker/setup.conf` です。`just setup` がそこから
+実際の設定サーフェスは `setup.toml` です。`just setup` がそこから
 `.env` と `compose.yaml` を生成するため、`.env` は生成された成果物であり、手で
-編集すべきではありません。`setup.conf` を編集（または `just setup-tui`）してから
+編集すべきではありません。`setup.toml` を編集（または `just setup-tui`）してから
 `just setup` を再実行してください。
 
-`setup.conf` はセクションに分かれています -- `[image]`、`[build]`、`[deploy]`、
+`setup.toml` はセクションに分かれています -- `[image]`、`[build]`、`[deploy]`、
 `[gui]`、`[network]`、`[security]`、`[resources]`、`[environment]`、`[tmpfs]`、
 `[devices]`、`[volumes]`。たとえば `[deploy]` セクションは GPU ランタイムキー
 （`gpu_mode`、`gpu_count`、`gpu_capabilities`、`gpu_runtime`）を持ち、`[image]` は
@@ -451,9 +451,8 @@ realsense_ros2/
 ├── docker/
 │   └── librealsense/
 │       └── Dockerfile           # プレビルド librealsense SDK ソース image（ローカル：pre-build hook／CI：GHCR へ公開）
+├── setup.toml                   # 設定サーフェス（.env/compose.yaml はここから生成）
 ├── config/
-│   ├── docker/
-│   │   └── setup.conf           # 設定サーフェス（.env/compose.yaml はここから生成）
 │   └── realsense/                     # type-first：yaml/ + json/ + udev/
 │       ├── yaml/                      # 独自の profile（none + 名前付き preset）
 │       │   ├── none.yaml                 # 空ファイル = 標準/デフォルト（camera.yaml のデフォルト対象）
