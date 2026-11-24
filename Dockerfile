@@ -216,7 +216,7 @@ RUN arch="$(dpkg --print-architecture)" && \
             ln -sf libglut.so.3.12 /usr/lib/x86_64-linux-gnu/libglut.so.3 && \
             ldconfig; \
         fi && \
-        curl -fsSL "https://librealsense.intel.com/Debian/apt-repo/pool/jammy/main/librscalibrationtool_${RS_CAL_VERSION}_amd64.deb" \
+        curl -fsSL "https://librealsense.realsenseai.com/Debian/apt-repo/pool/jammy/main/librscalibrationtool_${RS_CAL_VERSION}_amd64.deb" \
             -o /tmp/librscalibrationtool.deb && \
         dpkg -i /tmp/librscalibrationtool.deb && \
         rm -f /tmp/librscalibrationtool.deb && \
