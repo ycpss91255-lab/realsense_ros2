@@ -315,7 +315,7 @@ ARG CAMERA_CONFIG="camera.yaml"
 
 COPY --chmod=0755 "./${ENTRYPOINT_FILE}" "/entrypoint.sh"
 COPY --chmod=0644 "${CAMERA_CONFIG}" /camera_config.yaml
-COPY --chown="${USER}":"${GROUP}" --chmod=0755 .base/config "${CONFIG_DIR}"
+COPY --chown="${USER}":"${GROUP}" --chmod=0755 .base/dist/config "${CONFIG_DIR}"
 COPY --chown="${USER}":"${GROUP}" --chmod=0755 "${CONFIG_SRC}" "${CONFIG_DIR}"
 
 # Copy RealSense udev rules
@@ -350,6 +350,7 @@ FROM ${TEST_TOOLS_IMAGE} AS test-tools-stage
 
 FROM devel AS devel-test
 
+# hadolint ignore=DL3066
 USER root
 
 # Install lint tools (from the pre-built multi-arch test-tools image)
@@ -359,8 +360,8 @@ COPY --from=test-tools-stage /usr/local/bin/hadolint /usr/local/bin/hadolint
 # Lint: ShellCheck (.sh) + Hadolint (Dockerfile)
 COPY .hadolint.yaml /lint/.hadolint.yaml
 COPY Dockerfile /lint/Dockerfile
-# base v0.41.0 moved the wrapper scripts under .base/script/docker/wrapper/,
-# so the old `COPY .base/script/docker/*.sh` glob matched nothing and broke
+# base v0.41.0 moved the wrapper scripts under .base/dist/script/docker/wrapper/,
+# so the old `COPY .base/dist/script/docker/*.sh` glob matched nothing and broke
 # this stage. The repo's own script/*.sh are symlinks to those wrappers, so
 # `COPY script/*.sh /lint/` already dereferences and lints them.
 COPY script/*.sh /lint/
@@ -373,7 +374,7 @@ COPY script/hooks/pre/build.sh /lint/hooks-pre-build.sh
 # main.yaml derives it, no hardcoded literal). #130.
 COPY config/docker/setup.conf /lint/setup.conf
 COPY .github/workflows/main.yaml /lint/main.yaml
-COPY .base/script/docker/lib /lint/lib
+COPY .base/dist/script/docker/lib /lint/lib
 RUN shellcheck -S warning /lint/*.sh /lint/lib/*.sh
 WORKDIR /lint
 RUN hadolint Dockerfile
@@ -387,8 +388,10 @@ RUN ln -sf /opt/bats/bin/bats /usr/local/bin/bats
 ENV BATS_LIB_PATH="/usr/lib/bats"
 
 # Smoke test
-COPY .base/test/smoke/ /smoke_test/
-COPY test/smoke/ /smoke_test/
+COPY .base/dist/test/bats/smoke/shared/ /smoke_test/
+COPY .base/dist/test/bats/smoke/devel-test/ /smoke_test/
+COPY test/bats/smoke/shared/ /smoke_test/
+COPY test/bats/smoke/devel-test/ /smoke_test/
 
 ARG USER_NAME="user"
 ARG USER="${USER_NAME}"
