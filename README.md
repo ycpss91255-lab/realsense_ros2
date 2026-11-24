@@ -137,7 +137,7 @@ just build test                  # Build the devel-test gate
 just run                         # Start (e.g. just run -d)
 just exec                        # Enter running container
 just stop                        # Stop and remove containers
-just setup                       # Regenerate .env + compose.yaml from setup.conf
+just setup                       # Regenerate .env + compose.yaml from setup.toml
 
 docker compose build runtime     # Equivalent low-level command
 docker compose up runtime        # Start
@@ -205,7 +205,7 @@ The one value that must match on every machine is the domain ID, a
 per-deployment runtime value, so it goes in **`.env`** (the hand-authored
 workload overlay -- injected via `env_file: - .env`, applied by `just run`
 alone, never regenerated, git-ignored). Machine-baked / build params (GPU,
-privileged, mounts) stay in `config/docker/setup.conf`.
+privileged, mounts) stay in `setup.toml`.
 
 This repo already ships `[network] mode = host`, so DDS discovery (multicast)
 and traffic use the host's real interface -- reachable from other machines.
@@ -263,14 +263,14 @@ To fully remove what the repo placed on the host:
 
 ## Configuration
 
-### Configuration surface (setup.conf)
+### Configuration surface (setup.toml)
 
-The real configuration surface is `config/docker/setup.conf`. `just setup`
+The real configuration surface is `setup.toml`. `just setup`
 generates `.env` and `compose.yaml` from it, so `.env` is a generated artifact
-and should not be hand-edited. Edit `setup.conf` (or `just setup-tui`) and
+and should not be hand-edited. Edit `setup.toml` (or `just setup-tui`) and
 re-run `just setup`.
 
-`setup.conf` is organised into sections -- `[image]`, `[build]`, `[deploy]`,
+`setup.toml` is organised into sections -- `[image]`, `[build]`, `[deploy]`,
 `[gui]`, `[network]`, `[security]`, `[resources]`, `[environment]`, `[tmpfs]`,
 `[devices]`, `[volumes]`. For example, the `[deploy]` section carries the GPU
 runtime keys (`gpu_mode`, `gpu_count`, `gpu_capabilities`, `gpu_runtime`), and
@@ -450,9 +450,8 @@ realsense_ros2/
 ├── docker/
 │   └── librealsense/
 │       └── Dockerfile           # Prebuilt librealsense SDK source image (local: pre-build hook; CI: published to GHCR)
+├── setup.toml                   # configuration surface (.env/compose.yaml generated from this)
 ├── config/
-│   ├── docker/
-│   │   └── setup.conf           # configuration surface (.env/compose.yaml generated from this)
 │   └── realsense/                     # type-first: yaml/ + json/ + udev/
 │       ├── yaml/                      # OUR profiles (none + named presets)
 │       │   ├── none.yaml                 # empty = stock/default (camera.yaml default target)

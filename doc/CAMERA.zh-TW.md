@@ -86,4 +86,4 @@ D400 系列可從一般場景重新校正其立體深度參數 -- 不需要校�
 |---|---|
 | `No device detected` | 主機的 `lsusb` 是否看到相機？連接線／USB 3.0 連接埠／未被其他程序佔用。容器為 `privileged`（預設）。 |
 | `ros2: command not found` | 互動式 shell 會透過 `~/.bashrc.d` 自動 source ROS。只有非互動式的 `just exec <cmd>` 需要先執行 `source /opt/ros/${ROS_DISTRO}/setup.bash`。 |
-| `realsense-viewer` 無法開啟（X11） | 主機有 X server；`echo $DISPLAY` 有設定值；GUI 模式在 `config/docker/setup.conf` 中為 `[gui] mode = auto`。 |
+| `realsense-viewer` 無法開啟（X11） | 主機有 X server；`echo $DISPLAY` 有設定值；GUI 模式在 `setup.toml` 中為 `[gui] mode = auto`。 |

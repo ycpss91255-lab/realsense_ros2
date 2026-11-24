@@ -47,12 +47,15 @@ setup() {
 @test "version pins are concrete, not floating (#97, #130)" {
     # #97: the source build must pin concrete upstream tags (reproducible,
     # no auto-shipping upstream regressions) -- never `latest`.
-    # #130: the librealsense pin's canonical home is setup.conf; assert it
-    # carries a concrete vX.Y.Z there. The Dockerfile ARG stays a concrete
-    # fallback (a bare `docker build` must still resolve a version), and
+    # #130: the librealsense pin's canonical home is setup.toml (base rc6 moved
+    # the config surface from config/docker/setup.conf to a root setup.toml, #141);
+    # assert its [[build.args]] LIBREALSENSE_VERSION carries a concrete vX.Y.Z.
+    # The Dockerfile ARG stays a concrete fallback (a bare `docker build` must still resolve a version), and
     # REALSENSE_ROS_VERSION stays a concrete Dockerfile ARG.
-    assert_file_exists /lint/setup.conf
-    run grep -oP '^\s*arg_[0-9]+\s*=\s*LIBREALSENSE_VERSION=\K\S+' /lint/setup.conf
+    assert_file_exists /lint/setup.toml
+    # key/value are adjacent lines of one [[build.args]] table; -z lets grep
+    # match across the newline, tr drops the trailing NUL.
+    run bash -c 'grep -Pzo "key\s*=\s*\"LIBREALSENSE_VERSION\"\s*\nvalue\s*=\s*\"\Kv[0-9]+\.[0-9]+\.[0-9]+(?=\")" /lint/setup.toml | tr -d "\0"'
     assert_success
     assert_output --regexp '^v[0-9]+\.[0-9]+\.[0-9]+$'
 
@@ -65,17 +68,38 @@ setup() {
     assert_output --regexp '^[0-9]+\.[0-9]+\.[0-9]+$'
 }
 
-@test "main.yaml derives the librealsense version from setup.conf, no hardcoded literal (#130)" {
+@test "main.yaml derives the librealsense version from setup.toml, no hardcoded literal (#130)" {
     # #130 drift fix: CI must NOT hardcode a librealsense:v2.x literal (the bump
     # script never rewrote main.yaml, so a bump left CI FROMing the stale GHCR
-    # image). It must instead reference the resolve step that parses setup.conf.
+    # image). It must instead reference the resolve step that parses setup.toml.
     assert_file_exists /lint/main.yaml
     run grep -E 'librealsense:v2\.[0-9]' /lint/main.yaml
     assert_failure
     run grep -F 'needs.resolve-librealsense.outputs.version' /lint/main.yaml
     assert_success
-    run grep -F 'config/docker/setup.conf' /lint/main.yaml
+    run grep -F 'setup.toml' /lint/main.yaml
     assert_success
+    # #141: the old config/docker/setup.conf path no longer exists after base rc6.
+    run grep -F 'setup.conf' /lint/main.yaml
+    assert_failure
+}
+
+@test "Dockerfile lint stage copies setup.toml, not the removed config/docker/setup.conf (#141)" {
+    # base rc6 moved the config surface to a root setup.toml; a COPY of the old
+    # path fails the whole build ("not found").
+    assert_file_exists "${DOCKERFILE}"
+    run grep -E '^COPY setup\.toml /lint/setup\.toml$' "${DOCKERFILE}"
+    assert_success
+    run grep -E '^COPY config/docker/setup\.conf' "${DOCKERFILE}"
+    assert_failure
+}
+
+@test "main.yaml does not pass the removed test_tools_version input (#141)" {
+    # base rc3 dropped the build-worker `test_tools_version` input (base#1241);
+    # leaving it makes workflow validation fail outright.
+    assert_file_exists /lint/main.yaml
+    run grep -F 'test_tools_version' /lint/main.yaml
+    assert_failure
 }
 
 @test "runtime-test smoke asserts the ament marker (#97)" {

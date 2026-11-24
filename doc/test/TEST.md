@@ -1,6 +1,6 @@
 # TEST.md
 
-**112 tests** total.
+**114 tests** total.
 
 ## test/smoke/ros_env.bats
 
@@ -108,8 +108,8 @@
 | `bump_realsense_versions.sh is executable` | Script carries the executable bit |
 | `current_arg returns the pinned REALSENSE_ROS_VERSION from the Dockerfile ARG` | Parser reads the realsense-ros pin from a fixture Dockerfile |
 | `set_arg rewrites only the target Dockerfile ARG line (round-trip; others untouched)` | Rewriter updates the target Dockerfile ARG and leaves other ARG lines unchanged |
-| `conf_arg returns the LIBREALSENSE_VERSION pin from a setup.conf [build] arg_N line` | Parser reads the librealsense pin from a fixture setup.conf regardless of arg_ index (#130) |
-| `set_conf_arg rewrites only the target setup.conf arg line (round-trip; others untouched)` | Rewriter updates the librealsense setup.conf arg and leaves other arg lines unchanged (#130) |
+| `conf_arg returns the LIBREALSENSE_VERSION pin from a setup.toml [[build.args]] table` | Parser reads the librealsense pin from a fixture setup.toml by key, ignoring other build args and a same-named key in another table (#130, #141) |
+| `set_conf_arg rewrites only the target setup.toml value (round-trip; others untouched)` | Rewriter updates the librealsense setup.toml value and leaves other build args unchanged (#130, #141) |
 | `required_librealsense_minor parses find_package(realsense2 2.58.0) -> 2.58` | Reads the librealsense minor realsense-ros declares from CMakeLists text |
 | `required_librealsense_version parses the declared floor 2.58.0` | Reads the full declared librealsense version (the pin floor) |
 | `latest_tag_in_minor picks the highest v2.58.z (ignores other minors)` | Selects the newest librealsense tag within the required minor from a fixture list |
@@ -128,8 +128,10 @@
 | `groupadd new-group branch names the group after ${GROUP}, not ${USER} (#71)` | Dockerfile creates the new group named after USER_GROUP |
 | `runtime-test ldd smoke covers symlinks, not just regular files (#71)` | runtime-test find includes `-type l` so symlinked libs are ldd-checked |
 | `devel-base/runtime no longer apt-install the RealSense packages (#97)` | The apt `realsense2-camera` / `-description` installs are gone (source build) |
-| `version pins are concrete, not floating (#97, #130)` | setup.conf carries a concrete `LIBREALSENSE_VERSION=vX.Y.Z` pin; Dockerfile fallback + `REALSENSE_ROS_VERSION` stay concrete, not `latest` |
-| `main.yaml derives the librealsense version from setup.conf, no hardcoded literal (#130)` | CI has no `librealsense:v2.x` literal and references the `resolve-librealsense` step / setup.conf |
+| `version pins are concrete, not floating (#97, #130)` | setup.toml carries a concrete `LIBREALSENSE_VERSION=vX.Y.Z` pin; Dockerfile fallback + `REALSENSE_ROS_VERSION` stay concrete, not `latest` |
+| `main.yaml derives the librealsense version from setup.toml, no hardcoded literal (#130)` | CI has no `librealsense:v2.x` literal, references the `resolve-librealsense` step / setup.toml, and no longer mentions setup.conf |
+| `Dockerfile lint stage copies setup.toml, not the removed config/docker/setup.conf (#141)` | The lint stage COPYs the root setup.toml; the old path (gone after base rc6) fails the build |
+| `main.yaml does not pass the removed test_tools_version input (#141)` | build-worker dropped `test_tools_version` (base#1241); leaving it fails workflow validation |
 | `runtime-test smoke asserts the ament marker (#97)` | runtime smoke runs `ros2 pkg prefix realsense2_camera` to catch a missed marker |
 | `runtime rosdep skips the self-built SDK and resolves exec deps only (#97)` | runtime rosdep uses `--dependency-types=exec --skip-keys=librealsense2` |
 | `local librealsense SDK tag is version-scoped (Dockerfile default + hook agree)` | Dockerfile `LIBREALSENSE_IMAGE` default and hook `-t` both derive `librealsense:${LIBREALSENSE_VERSION}-${UBUNTU_CODENAME}` |

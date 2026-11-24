@@ -59,13 +59,29 @@ setup() {
     assert_line "distro=humble"
 }
 
-@test "conf_arg returns the LIBREALSENSE_VERSION pin from a setup.conf [build] arg_N line" {
-    # #130: the librealsense pin lives in setup.conf now; conf_arg reads it back
-    # regardless of the arg_ index and ignores the other arg_N build args.
+@test "conf_arg returns the LIBREALSENSE_VERSION pin from a setup.toml [[build.args]] table" {
+    # #130/#141: the librealsense pin lives in setup.toml ([[build.args]] key/value
+    # tables); conf_arg reads it back by key, ignoring the other build args and a
+    # same-named key outside [[build.args]].
     run bash -c '
         f="$(mktemp)"
-        printf "[build]\narg_1 = TZ=Asia/Taipei\narg_4 = LIBREALSENSE_VERSION=v2.58.2\n" > "$f"
-        SETUP_CONF="$f"
+        cat > "$f" <<TOML
+[build]
+network = "auto"
+
+[[build.args]]
+key = "TZ"
+value = "Asia/Taipei"
+
+[[build.args]]
+key = "LIBREALSENSE_VERSION"
+value = "v2.58.2"
+
+[deploy]
+key = "LIBREALSENSE_VERSION"
+value = "decoy"
+TOML
+        SETUP_TOML="$f"
         source /lint/bump_realsense_versions.sh
         conf_arg LIBREALSENSE_VERSION
         rm -f "$f"'
@@ -73,15 +89,26 @@ setup() {
     assert_output "v2.58.2"
 }
 
-@test "set_conf_arg rewrites only the target setup.conf arg line (round-trip; others untouched)" {
+@test "set_conf_arg rewrites only the target setup.toml value (round-trip; others untouched)" {
     run bash -c '
         f="$(mktemp)"
-        printf "[build]\narg_1 = TZ=Asia/Taipei\narg_4 = LIBREALSENSE_VERSION=v2.58.2\n" > "$f"
-        SETUP_CONF="$f"
+        cat > "$f" <<TOML
+[build]
+network = "auto"
+
+[[build.args]]
+key = "TZ"
+value = "Asia/Taipei"
+
+[[build.args]]
+key = "LIBREALSENSE_VERSION"
+value = "v2.58.2"
+TOML
+        SETUP_TOML="$f"
         source /lint/bump_realsense_versions.sh
         set_conf_arg LIBREALSENSE_VERSION v9.9.9
         echo "lib=$(conf_arg LIBREALSENSE_VERSION)"
-        grep -q "arg_1 = TZ=Asia/Taipei" "$f" && echo "tz=kept"
+        grep -qx "value = \"Asia/Taipei\"" "$f" && echo "tz=kept"
         rm -f "$f"'
     assert_success
     assert_line "lib=v9.9.9"

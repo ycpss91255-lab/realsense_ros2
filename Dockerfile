@@ -2,9 +2,9 @@ ARG ROS_DISTRO="humble"
 ARG ROS_TAG="ros-base"
 ARG UBUNTU_CODENAME="jammy"
 # librealsense SDK pin. FALLBACK default only: the canonical source is
-# config/docker/setup.conf ([build] arg_N = LIBREALSENSE_VERSION=...), which
+# setup.toml ([[build.args]] key = "LIBREALSENSE_VERSION"), which
 # setup.sh flows into .env.generated + compose build.args (local) and main.yaml
-# parses for CI; bump_realsense_versions.sh rewrites setup.conf, not this line.
+# parses for CI; bump_realsense_versions.sh rewrites setup.toml, not this line.
 # This default keeps a bare `docker build` (no build-arg, no env) working.
 # Declared before the first FROM so the `rs_sdk` stage's FROM tag can reference
 # it (FROM-line ARGs must be global or pre-FROM). The prebuilt per-distro SDK
@@ -369,10 +369,10 @@ COPY script/*.sh /lint/
 # shellchecked by it; a dedicated COPY brings the pre-build hook into the
 # /lint/*.sh glob (and lets dockerfile_guards.bats grep it).
 COPY script/hooks/pre/build.sh /lint/hooks-pre-build.sh
-# Canonical librealsense pin (setup.conf) + the CI workflow: dockerfile_guards.bats
-# greps these to assert the single-source wiring (setup.conf carries the pin;
+# Canonical librealsense pin (setup.toml) + the CI workflow: dockerfile_guards.bats
+# greps these to assert the single-source wiring (setup.toml carries the pin;
 # main.yaml derives it, no hardcoded literal). #130.
-COPY config/docker/setup.conf /lint/setup.conf
+COPY setup.toml /lint/setup.toml
 COPY .github/workflows/main.yaml /lint/main.yaml
 COPY .base/dist/script/docker/lib /lint/lib
 RUN shellcheck -S warning /lint/*.sh /lint/lib/*.sh
