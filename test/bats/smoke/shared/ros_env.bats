@@ -166,3 +166,12 @@ setup() {
 @test "Work directory exists" {
     assert [ -d "${HOME}/work" ]
 }
+
+@test "container user can create the ROS log directory (#143)" {
+    # `ros2 launch` creates ${HOME}/.ros/log on start. A build step that runs
+    # `rosdep update` as root leaves ${HOME}/.ros owned by root, and the
+    # launch then dies with PermissionError.
+    run mkdir -p "${HOME}/.ros/log"
+    assert_success
+    assert [ -w "${HOME}/.ros/log" ]
+}
