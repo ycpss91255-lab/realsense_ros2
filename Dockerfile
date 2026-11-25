@@ -303,7 +303,7 @@ RUN prefix="/opt/ros/${ROS_DISTRO}" && \
         DESTDIR="${stage}" cmake --install "${b}" --prefix "${prefix}"; \
     done && \
     cp -r /tmp/rs_ws/src /opt/rs-stage-src && \
-    rm -rf /tmp/rs_ws /var/lib/apt/lists/*
+    rm -rf /tmp/rs_ws /var/lib/apt/lists/* "${HOME}/.ros"
 
 # Optional camera config, modeled on app/ros1_bridge's BRIDGE_FILE. CAMERA_CONFIG
 # points at the root `camera.yaml` symlink, whose default target is the EMPTY
@@ -449,12 +449,16 @@ COPY --from=devel /opt/rs-stage-src                          /tmp/rs-src
 # non-interactive guard short-circuits otherwise), so non-interactive
 # correctness is untouched. devel already does this via its bashrc.d drop-in
 # (base#657, #87). Folded into one RUN to avoid a consecutive-RUN lint (DL3059).
+# This RUN is root with HOME set to the user's home, so `rosdep update` writes
+# its cache to a root-owned ${HOME}/.ros; remove it, or the runtime user cannot
+# create ${HOME}/.ros/log and `ros2 launch` dies on start (#143). The devel
+# stage's rosdep RUN above removes it for the same reason.
 RUN apt-get update && \
     (rosdep init 2>/dev/null || true) && \
     rosdep update && \
     rosdep install -i --from-path /tmp/rs-src --rosdistro "${ROS_DISTRO}" \
         --dependency-types=exec --skip-keys=librealsense2 -y && \
-    rm -rf /tmp/rs-src && \
+    rm -rf /tmp/rs-src "${HOME}/.ros" && \
     ldconfig && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
@@ -499,6 +503,12 @@ CMD ["ros2", "launch", "realsense2_camera", "rs_align_depth_launch.py", "initial
 # bash for-loop. The inner bash runs without the outer SHELL's
 # -euo pipefail, so `source` under nounset is safe (matches ros1_bridge).
 FROM runtime AS runtime-test
+
+# `ros2 launch` (the runtime CMD) creates ${HOME}/.ros/log on start. This stage
+# runs as the runtime user, so the mkdir fails the build when a root build step
+# left ${HOME}/.ros owned by root (#143).
+RUN mkdir -p "${HOME}/.ros/log" || \
+    { echo "RUNTIME SMOKE FAIL: cannot create ${HOME}/.ros/log as $(id -un)"; exit 1; }
 
 ARG RUNTIME_SMOKE_CMD='whoami && bash --version && \
   source /opt/ros/${ROS_DISTRO}/setup.bash && \

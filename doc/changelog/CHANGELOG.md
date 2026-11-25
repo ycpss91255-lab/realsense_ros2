@@ -6,6 +6,12 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Fixed
+- The runtime container no longer restarts in a loop on start (#143). The devel
+  and runtime `rosdep update` steps run as root with `HOME` set to the user's
+  home, which left `${HOME}/.ros` owned by root, so `ros2 launch` could not
+  create `${HOME}/.ros/log` and exited with `PermissionError`. Both steps now
+  remove that directory. Added a bats test (devel) and a `runtime-test` check
+  that the container user can create the ROS log directory.
 - Moved the librealsense pin readers to the root `setup.toml` after the base
   v0.43.0-rc6 upgrade dropped `config/docker/setup.conf` (#141): the Dockerfile
   lint stage now `COPY`s `setup.toml` (the old path failed the build with
