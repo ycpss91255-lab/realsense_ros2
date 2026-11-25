@@ -2,7 +2,7 @@
 
 # Intel RealSense Docker 容器（ROS 2）
 
-[![CI](https://github.com/ycpss91255-docker/realsense_ros2/actions/workflows/main.yaml/badge.svg)](https://github.com/ycpss91255-docker/realsense_ros2/actions/workflows/main.yaml) [![License](https://img.shields.io/badge/License-Apache--2.0-blue?style=flat-square)](../LICENSE)
+[![CI](https://github.com/ycpss91255-lab/realsense_ros2/actions/workflows/main.yaml/badge.svg)](https://github.com/ycpss91255-lab/realsense_ros2/actions/workflows/main.yaml) [![License](https://img.shields.io/badge/License-Apache--2.0-blue?style=flat-square)](../LICENSE)
 
 ## TL;DR
 
@@ -135,7 +135,7 @@ just build test                  # 建置 devel-test 關卡
 just run                         # 啟動（例如 just run -d）
 just exec                        # 進入執行中的容器
 just stop                        # 停止並移除容器
-just setup                       # 從 setup.conf 重新產生 .env + compose.yaml
+just setup                       # 從 setup.toml 重新產生 .env + compose.yaml
 
 docker compose build runtime     # 等效的低階指令
 docker compose up runtime        # 啟動
@@ -200,7 +200,7 @@ ROS 2 沒有 master——同一個 **DDS domain** 上的節點會透過 LAN 自�
 domain ID，這是每次部署時的執行期數值，所以它放在 **`.env`**（手動撰寫的
 workload overlay——透過 `env_file: - .env` 注入，只由 `just run` 套用，永遠
 不會被重新產生，且已被 git 忽略）。機器層級／建置參數（GPU、privileged、
-掛載）則留在 `config/docker/setup.conf`。
+掛載）則留在 `setup.toml`。
 
 此 repo 已預設 `[network] mode = host`，所以 DDS 探索（multicast）與流量都走
 主機真實網卡——其他機器可以連得到。
@@ -257,13 +257,13 @@ just prune     # remove this repo's images + dangling build cache (see `just pru
 
 ## 設定
 
-### 設定介面（setup.conf）
+### 設定介面（setup.toml）
 
-真正的設定介面是 `config/docker/setup.conf`。`just setup` 會從它產生 `.env`
+真正的設定介面是 `setup.toml`。`just setup` 會從它產生 `.env`
 與 `compose.yaml`，因此 `.env` 是產生出來的產物，不應手動編輯。請編輯
-`setup.conf`（或執行 `just setup-tui`）後重新執行 `just setup`。
+`setup.toml`（或執行 `just setup-tui`）後重新執行 `just setup`。
 
-`setup.conf` 以區段組織 -- `[image]`、`[build]`、`[deploy]`、`[gui]`、
+`setup.toml` 以區段組織 -- `[image]`、`[build]`、`[deploy]`、`[gui]`、
 `[network]`、`[security]`、`[resources]`、`[environment]`、`[tmpfs]`、
 `[devices]`、`[volumes]`。例如 `[deploy]` 區段帶有 GPU runtime 鍵
 （`gpu_mode`、`gpu_count`、`gpu_capabilities`、`gpu_runtime`），而 `[image]`
@@ -431,9 +431,8 @@ realsense_ros2/
 ├── docker/
 │   └── librealsense/
 │       └── Dockerfile           # 預建 librealsense SDK 來源 image（本地：pre-build hook；CI：發布至 GHCR）
+├── setup.toml                   # 設定介面（.env/compose.yaml 由此產生）
 ├── config/
-│   ├── docker/
-│   │   └── setup.conf           # 設定介面（.env/compose.yaml 由此產生）
 │   └── realsense/                     # type-first：yaml/ + json/ + udev/
 │       ├── yaml/                      # 我們自己的 profile（none + 具名 preset）
 │       │   ├── none.yaml                 # 空檔 = 原廠/預設（camera.yaml 預設目標）

@@ -110,4 +110,4 @@ different scene -- a score back near 0 means the calibration has converged.
 |---|---|
 | `No device detected` | Host `lsusb` sees the camera? cable / USB 3.0 port / not held by another process. Container is `privileged` (default). |
 | `ros2: command not found` | Interactive shells auto-source ROS via `~/.bashrc.d`. Only a non-interactive `just exec <cmd>` needs `source /opt/ros/${ROS_DISTRO}/setup.bash` first. |
-| `realsense-viewer` will not open (X11) | Host has an X server; `echo $DISPLAY` is set; GUI mode is `[gui] mode = auto` in `config/docker/setup.conf`. |
+| `realsense-viewer` will not open (X11) | Host has an X server; `echo $DISPLAY` is set; GUI mode is `[gui] mode = auto` in `setup.toml`. |

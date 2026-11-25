@@ -2,9 +2,9 @@ ARG ROS_DISTRO="humble"
 ARG ROS_TAG="ros-base"
 ARG UBUNTU_CODENAME="jammy"
 # librealsense SDK pin. FALLBACK default only: the canonical source is
-# config/docker/setup.conf ([build] arg_N = LIBREALSENSE_VERSION=...), which
+# setup.toml ([[build.args]] key = "LIBREALSENSE_VERSION"), which
 # setup.sh flows into .env.generated + compose build.args (local) and main.yaml
-# parses for CI; bump_realsense_versions.sh rewrites setup.conf, not this line.
+# parses for CI; bump_realsense_versions.sh rewrites setup.toml, not this line.
 # This default keeps a bare `docker build` (no build-arg, no env) working.
 # Declared before the first FROM so the `rs_sdk` stage's FROM tag can reference
 # it (FROM-line ARGs must be global or pre-FROM). The prebuilt per-distro SDK
@@ -15,7 +15,7 @@ ARG LIBREALSENSE_VERSION="v2.58.2"
 # bats-support/assert/mock extensions). Resolves to `test-tools:local` for the
 # local `just build` flow (build.sh auto-builds it from
 # .base/dockerfile/Dockerfile.test-tools) or to the multi-arch
-# ghcr.io/ycpss91255-docker/test-tools:vX.Y.Z in CI. The image is multi-arch,
+# ghcr.io/ycpss91255-lab/test-tools:vX.Y.Z in CI. The image is multi-arch,
 # so `FROM ${TEST_TOOLS_IMAGE}` resolves the matching variant per build
 # platform -- that is what lets the arm64 build (#72) ship arm64 lint/bats
 # binaries with no per-repo arch-aware download logic. Consuming this image
@@ -28,7 +28,7 @@ ARG TEST_TOOLS_IMAGE="test-tools:local"
 # `just build` / `./build.sh` flow (the pre-build hook script/hooks/pre/build.sh
 # auto-builds that tag from docker/Dockerfile.librealsense when LIBREALSENSE_IMAGE
 # is unset -> self-contained, no GHCR needed), or to the multi-arch
-# ghcr.io/ycpss91255-docker/librealsense:${LIBREALSENSE_VERSION}-${UBUNTU_CODENAME}
+# ghcr.io/ycpss91255-lab/librealsense:${LIBREALSENSE_VERSION}-${UBUNTU_CODENAME}
 # in CI (main.yaml passes it as a build-arg so buildx PULLS the prebuilt SDK
 # instead of recompiling librealsense ~15-25 min per run). The version+codename
 # scope stops ros1 (v2.55.1) and ros2 (v2.58.2) clobbering one shared local tag;
@@ -216,7 +216,7 @@ RUN arch="$(dpkg --print-architecture)" && \
             ln -sf libglut.so.3.12 /usr/lib/x86_64-linux-gnu/libglut.so.3 && \
             ldconfig; \
         fi && \
-        curl -fsSL "https://librealsense.intel.com/Debian/apt-repo/pool/jammy/main/librscalibrationtool_${RS_CAL_VERSION}_amd64.deb" \
+        curl -fsSL "https://librealsense.realsenseai.com/Debian/apt-repo/pool/jammy/main/librscalibrationtool_${RS_CAL_VERSION}_amd64.deb" \
             -o /tmp/librscalibrationtool.deb && \
         dpkg -i /tmp/librscalibrationtool.deb && \
         rm -f /tmp/librscalibrationtool.deb && \
@@ -315,7 +315,7 @@ ARG CAMERA_CONFIG="camera.yaml"
 
 COPY --chmod=0755 "./${ENTRYPOINT_FILE}" "/entrypoint.sh"
 COPY --chmod=0644 "${CAMERA_CONFIG}" /camera_config.yaml
-COPY --chown="${USER}":"${GROUP}" --chmod=0755 .base/config "${CONFIG_DIR}"
+COPY --chown="${USER}":"${GROUP}" --chmod=0755 .base/dist/config "${CONFIG_DIR}"
 COPY --chown="${USER}":"${GROUP}" --chmod=0755 "${CONFIG_SRC}" "${CONFIG_DIR}"
 
 # Copy RealSense udev rules
@@ -344,12 +344,13 @@ CMD ["bash"]
 
 ############################## devel-test (ephemeral) ##############################
 # Resolves to test-tools:local (local just build) or
-# ghcr.io/ycpss91255-docker/test-tools:vX.Y.Z (CI); see TEST_TOOLS_IMAGE at top.
+# ghcr.io/ycpss91255-lab/test-tools:vX.Y.Z (CI); see TEST_TOOLS_IMAGE at top.
 # hadolint ignore=DL3006
 FROM ${TEST_TOOLS_IMAGE} AS test-tools-stage
 
 FROM devel AS devel-test
 
+# hadolint ignore=DL3066
 USER root
 
 # Install lint tools (from the pre-built multi-arch test-tools image)
@@ -359,8 +360,8 @@ COPY --from=test-tools-stage /usr/local/bin/hadolint /usr/local/bin/hadolint
 # Lint: ShellCheck (.sh) + Hadolint (Dockerfile)
 COPY .hadolint.yaml /lint/.hadolint.yaml
 COPY Dockerfile /lint/Dockerfile
-# base v0.41.0 moved the wrapper scripts under .base/script/docker/wrapper/,
-# so the old `COPY .base/script/docker/*.sh` glob matched nothing and broke
+# base v0.41.0 moved the wrapper scripts under .base/dist/script/docker/wrapper/,
+# so the old `COPY .base/dist/script/docker/*.sh` glob matched nothing and broke
 # this stage. The repo's own script/*.sh are symlinks to those wrappers, so
 # `COPY script/*.sh /lint/` already dereferences and lints them.
 COPY script/*.sh /lint/
@@ -368,12 +369,12 @@ COPY script/*.sh /lint/
 # shellchecked by it; a dedicated COPY brings the pre-build hook into the
 # /lint/*.sh glob (and lets dockerfile_guards.bats grep it).
 COPY script/hooks/pre/build.sh /lint/hooks-pre-build.sh
-# Canonical librealsense pin (setup.conf) + the CI workflow: dockerfile_guards.bats
-# greps these to assert the single-source wiring (setup.conf carries the pin;
+# Canonical librealsense pin (setup.toml) + the CI workflow: dockerfile_guards.bats
+# greps these to assert the single-source wiring (setup.toml carries the pin;
 # main.yaml derives it, no hardcoded literal). #130.
-COPY config/docker/setup.conf /lint/setup.conf
+COPY setup.toml /lint/setup.toml
 COPY .github/workflows/main.yaml /lint/main.yaml
-COPY .base/script/docker/lib /lint/lib
+COPY .base/dist/script/docker/lib /lint/lib
 RUN shellcheck -S warning /lint/*.sh /lint/lib/*.sh
 WORKDIR /lint
 RUN hadolint Dockerfile
@@ -387,8 +388,10 @@ RUN ln -sf /opt/bats/bin/bats /usr/local/bin/bats
 ENV BATS_LIB_PATH="/usr/lib/bats"
 
 # Smoke test
-COPY .base/test/smoke/ /smoke_test/
-COPY test/smoke/ /smoke_test/
+COPY .base/dist/test/bats/smoke/shared/ /smoke_test/
+COPY .base/dist/test/bats/smoke/devel-test/ /smoke_test/
+COPY test/bats/smoke/shared/ /smoke_test/
+COPY test/bats/smoke/devel-test/ /smoke_test/
 
 ARG USER_NAME="user"
 ARG USER="${USER_NAME}"

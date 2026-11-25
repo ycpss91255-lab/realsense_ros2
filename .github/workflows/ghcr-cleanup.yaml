@@ -44,7 +44,7 @@ jobs:
       - name: Clean up untagged librealsense orphans
         uses: dataaxiom/ghcr-cleanup-action@v1
         with:
-          owner: ycpss91255-docker
+          owner: ycpss91255-lab
           package: librealsense
           delete-untagged: true
           older-than: 7 days

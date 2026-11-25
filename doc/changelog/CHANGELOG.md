@@ -6,6 +6,14 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Fixed
+- Moved the librealsense pin readers to the root `setup.toml` after the base
+  v0.43.0-rc6 upgrade dropped `config/docker/setup.conf` (#141): the Dockerfile
+  lint stage now `COPY`s `setup.toml` (the old path failed the build with
+  `not found`), `bump_realsense_versions.sh` `conf_arg` / `set_conf_arg` read and
+  rewrite the `[[build.args]]` `LIBREALSENSE_VERSION` value, the `main.yaml`
+  `resolve-librealsense` job reuses `conf_arg`, and `dockerfile_guards.bats` /
+  `bump_realsense_versions.bats` assert the TOML layout. Dropped the
+  `test_tools_version` input that build-worker no longer accepts (base#1241).
 - Version-scoped the local librealsense SDK image tag (refs #125, base#828): the
   pre-build hook and the Dockerfile `LIBREALSENSE_IMAGE` default used a bare
   `librealsense:local`, which ros1 (v2.55.1) and ros2 (v2.58.2) share -- building
