@@ -52,7 +52,7 @@ jobs:
           - { name: humble, ros_distro: humble, ros_tag: ros-base, ubuntu_codename: jammy }
           - { name: jazzy,  ros_distro: jazzy,  ros_tag: ros-base, ubuntu_codename: noble }
     name: build (${{ matrix.target.name }})
-    uses: ycpss91255-lab/base/.github/workflows/build-worker.yaml@v0.41.0
+    uses: ycpss91255-lab/base/.github/workflows/build-worker.yaml@v0.43.0-rc7
     with:
       image_name: realsense_ros2
       cache_variant: ${{ matrix.target.name }}
@@ -96,7 +96,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write
-    uses: ycpss91255-lab/base/.github/workflows/release-worker.yaml@v0.41.0
+    uses: ycpss91255-lab/base/.github/workflows/release-worker.yaml@v0.43.0-rc7
     with:
       archive_name_prefix: realsense_ros2
     secrets: inherit

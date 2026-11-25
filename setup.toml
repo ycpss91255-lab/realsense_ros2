@@ -1,0 +1,61 @@
+[[image.rules]]
+rule = "prefix:docker_"
+
+[[image.rules]]
+rule = "suffix:_ws"
+
+[[image.rules]]
+rule = "@basename"
+
+[build]
+target_arch = ""
+network = "auto"
+
+[[build.args]]
+key = "APT_MIRROR_UBUNTU"
+value = "tw.archive.ubuntu.com"
+
+[[build.args]]
+key = "APT_MIRROR_DEBIAN"
+value = "mirror.twds.com.tw"
+
+[[build.args]]
+key = "TZ"
+value = "Asia/Taipei"
+
+[[build.args]]
+key = "LIBREALSENSE_VERSION"
+value = "v2.58.2"
+
+[deploy]
+gpu_mode = "auto"
+gpu_count = "all"
+gpu_capabilities = "gpu compute utility graphics"
+gpu_runtime = "auto"
+
+[gui]
+mode = "auto"
+
+[network]
+mode = "host"
+ipc = "host"
+network_name = ""
+ports = []
+
+[security]
+privileged = true
+cap_add = []
+cap_drop = []
+security_opt = []
+
+[resources]
+shm_size = ""
+
+[[volumes]]
+source = "${WS_PATH}"
+target = "/home/${USER_NAME}/work"
+
+[[volumes]]
+source = "/dev"
+target = "/dev"
+
