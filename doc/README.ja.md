@@ -432,7 +432,7 @@ realsense_ros2/
 ├── camera.yaml -> config/realsense/yaml/none.yaml # シンボリックリンク（有効なカメラ設定；デフォルト = 標準）
 ├── justfile -> .base/script/docker/justfile        # シンボリックリンク（ユーザーエントリポイント）
 ├── .hadolint.yaml -> .base/.hadolint.yaml          # シンボリックリンク
-├── .base/                       # base サブツリー（読み取り専用；v0.41.0）
+├── .base/                       # base サブツリー（読み取り専用；v0.43.0-rc9）
 ├── script/
 │   ├── entrypoint.sh            # コンテナエントリポイント（リポジトリ所有）
 │   ├── install_udev_rules.sh    # ホストに RealSense udev ルールをインストール（リポジトリ所有）

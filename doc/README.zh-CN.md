@@ -409,7 +409,7 @@ realsense_ros2/
 ├── camera.yaml -> config/realsense/yaml/none.yaml # 符号链接（启用中的相机配置；默认 = 原厂）
 ├── justfile -> .base/script/docker/justfile        # 符号链接（用户入口）
 ├── .hadolint.yaml -> .base/.hadolint.yaml          # 符号链接
-├── .base/                       # base subtree（只读；v0.41.0）
+├── .base/                       # base subtree（只读；v0.43.0-rc9）
 ├── script/
 │   ├── entrypoint.sh            # 容器入口点（仓库自有）
 │   ├── install_udev_rules.sh    # 在 host 安装 RealSense udev 规则（仓库自有）
