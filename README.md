@@ -431,7 +431,7 @@ realsense_ros2/
 ├── camera.yaml -> config/realsense/yaml/none.yaml # symlink (active camera config; default = stock)
 ├── justfile -> .base/script/docker/justfile        # symlink (user entry point)
 ├── .hadolint.yaml -> .base/.hadolint.yaml          # symlink
-├── .base/                       # base subtree (read-only; v0.41.0)
+├── .base/                       # base subtree (read-only; v0.43.0-rc9)
 ├── script/
 │   ├── entrypoint.sh            # Container entrypoint (repo-owned)
 │   ├── install_udev_rules.sh    # Install RealSense udev rules on the host (repo-owned)
